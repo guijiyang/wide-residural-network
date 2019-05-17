@@ -234,8 +234,7 @@ def create_log(num_layers, width):
     logging.getLogger('tensorflow').handlers = handlers
 
 
-def input_fn(data_dir,
-             subset,
+def input_fn(subset,
              num_shards,
              batch_size,
              epochs,
@@ -251,7 +250,7 @@ def input_fn(data_dir,
     """
     with tf.device('/cpu:0'):
         use_distortion = subset == 'train' and use_distortion
-        dataset = cifar10_input.Cifar10Dataset(data_dir, subset, use_distortion)
+        dataset = cifar10_input.Cifar10Dataset(subset, use_distortion)
         image_batch, label_batch = dataset.make_batch(batch_size, epochs)
         if num_shards <= 1:
             return [image_batch], [label_batch]
@@ -268,7 +267,7 @@ def input_fn(data_dir,
         return feature_shards, lbael_shards
 
 
-def main(checkpoint_dir, data_dir, variable_strategy, num_gpus,
+def main(checkpoint_dir, variable_strategy, num_gpus,
          use_distortion_for_training, log_device_placement,
          num_intra_threads, **hparams):
     # 环境变量在一个过时的路径上，默认设置为off
@@ -286,7 +285,7 @@ def main(checkpoint_dir, data_dir, variable_strategy, num_gpus,
     estimator = tf.estimator.Estimator(model_fn=get_model_fn(num_gpus, variable_strategy, 1),
                                        config=config, params=hparams)
 
-    train_input_fn = functools.partial(input_fn, data_dir,
+    train_input_fn = functools.partial(input_fn,
                                        subset='train',
                                        num_shards=num_gpus,
                                        batch_size=hparams['train_batch_size'],
@@ -294,7 +293,7 @@ def main(checkpoint_dir, data_dir, variable_strategy, num_gpus,
                                        epochs=hparams['train_epochs'])
     train_spec = tf.estimator.TrainSpec(
         input_fn=train_input_fn, max_steps=None)
-    eval_input_fn = functools.partial(input_fn, data_dir,
+    eval_input_fn = functools.partial(input_fn,
                                       subset='eval',
                                       num_shards=num_gpus,
                                       batch_size=hparams['eval_batch_size'],
@@ -308,11 +307,11 @@ def main(checkpoint_dir, data_dir, variable_strategy, num_gpus,
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '--data-dir',
-        type=str,
-        default='./dataset',
-        help='The directory where the input data is stored.')
+    # parser.add_argument(
+    #     '--data-dir',
+    #     type=str,
+    #     default='./dataset',
+    #     help='The directory where the input data is stored.')
     parser.add_argument(
         '--checkpoint-dir',
         type=str,

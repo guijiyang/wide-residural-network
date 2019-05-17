@@ -12,14 +12,17 @@ DEPTH = 3
 class Cifar10Dataset(object):
     '''cifar10数据集'''
 
-    def __init__(self, data_dir, subset='train', use_distortion=True):
-        self.data_dir = data_dir
+    def __init__(self, subset='train', use_distortion=True):
         self.subset = subset
         self.use_distortion = use_distortion
 
     def get_filenames(self):
         if self.subset in ['train', 'validation', 'eval']:
-            return [os.path.join(self.data_dir, self.subset+'.tfrecords')]
+            file_path = tf.keras.utils.get_file(
+                'cifar_tfrecords', origin='https://github.com/guijiyang/wide-residural-network/releases/download/v1.0.0/cifar10_tfrecords.tar.gz',
+                md5_hash='37e85d853d3c02501063940e687b6dd521ba8e31b1bdf4f902dc3c6d4f210242',
+                extract=True)
+            return [os.path.join(file_path, self.subset+'.tfrecords')]
         else:
             raise ValueError('Invalid data subset "%s"' % self.subset)
 
@@ -45,8 +48,7 @@ class Cifar10Dataset(object):
 
         return image, label
 
-
-    def make_batch(self, batch_size,epochs):
+    def make_batch(self, batch_size, epochs):
         """Read the images and labels from 'filenames'."""
         filenames = self.get_filenames()
         # Repeat infinitely.
@@ -62,7 +64,8 @@ class Cifar10Dataset(object):
                 self.num_examples_per_epoch(self.subset) * 0.4)
         # Ensure that the capacity is sufficiently large to provide good random
         # shuffling.
-            dataset = dataset.shuffle(buffer_size=min_queue_examples + 3 * batch_size)
+            dataset = dataset.shuffle(
+                buffer_size=min_queue_examples + 3 * batch_size)
 
         # Batch it up.
         dataset = dataset.batch(batch_size)
@@ -70,12 +73,13 @@ class Cifar10Dataset(object):
         image_batch, label_batch = iterator.get_next()
 
         return image_batch, label_batch
-    
+
     def preprocess(self, image):
         """Preprocess a single image in [height, width, depth] layout."""
         if self.subset == 'train' and self.use_distortion:
-        # Pad 4 pixels on each dimension of feature map, done in mini-batch
-            image = tf.image.resize_image_with_crop_or_pad(image, HEIGHT+4, WIDTH+4)
+            # Pad 4 pixels on each dimension of feature map, done in mini-batch
+            image = tf.image.resize_image_with_crop_or_pad(
+                image, HEIGHT+4, WIDTH+4)
             image = tf.random_crop(image, [HEIGHT, WIDTH, DEPTH])
             image = tf.image.random_flip_left_right(image)
             image = tf.image.per_image_standardization(image)
@@ -86,12 +90,12 @@ class Cifar10Dataset(object):
         return image
 
     # @staticmethod
-    def num_examples_per_epoch(self,subset='train'):
+    def num_examples_per_epoch(self, subset='train'):
         if subset == 'train':
             return 45000
         elif subset == 'validation':
             return 5000
-        elif subset=='eval':
+        elif subset == 'eval':
             return 10000
         else:
-            raise ValueError('Invalid data subset "%s"'%subset)
+            raise ValueError('Invalid data subset "%s"' % subset)

@@ -9,13 +9,13 @@
 
 ## 运行方式
 
-```python
-python classify_main.py --data-dir='数据路径' --checkpoint-dir='模型保存路径'
+```bash
+python classify_main.py --checkpoint-dir='模型保存路径'
 ```
 
 ## 超参数调节
 可以指定以下参数：
-```python
+```bash
 variable-strategy: 以CPU或GPU进行模型的训练
 num-gpus：制定用于训练的GPU的数量
 data-format : 'channels_first' 或者 'channels_last'
